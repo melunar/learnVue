@@ -81,7 +81,7 @@ export function queueWatcher (watcher: Watcher) {
 }
 ```
 
-查看queueWatcher的源码我们发现，Watch对象并不是立即更新视图，而是被push进了一个队列queue，此时状态处于waiting的状态，这时候会继续会有Watch对象被push进这个队列queue，等待下一个tick时，这些Watch对象才会被遍历取出，更新视图。同时，id重复的Watcher不会被多次加入到queue中去，因为在最终渲染时，我们只需要关心数据的最终结果。
+查看queueWatcher的源码我们发现，Watch对象并不是立即更新视图，而是被push进了一个队列queue，此时状态处于waiting的状态，这时候会继续会有Watch对象被push进这个队列queue，等到下一个tick运行时，这些Watch对象才会被遍历取出，更新视图。同时，id重复的Watcher不会被多次加入到queue中去，因为在最终渲染时，我们只需要关心数据的最终结果。
 
 那么，什么是下一个tick？
 
@@ -350,7 +350,7 @@ export default {
             test: 0
         };
     },
-    created () {
+    mounted () {
       for(let i = 0; i < 1000; i++) {
         this.test++;
       }
@@ -358,7 +358,7 @@ export default {
 }
 ```
 
-现在有这样的一种情况，created的时候test的值会被++循环执行1000次。
+现在有这样的一种情况，mounted的时候test的值会被++循环执行1000次。
 每次++时，都会根据响应式触发setter->Dep->Watcher->update->patch。
 如果这时候没有异步更新视图，那么每次++都会直接操作DOM更新视图，这是非常消耗性能的。
 所以Vue.js实现了一个queue队列，在下一个tick的时候会统一执行queue中Watcher的run。同时，拥有相同id的Watcher不会被重复加入到该queue中去，所以不会执行1000次Watcher的run。最终更新视图只会直接将test对应的DOM的0变成1000。
